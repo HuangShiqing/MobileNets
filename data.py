@@ -272,7 +272,7 @@ def get_y_true(boxes):
 
     # initialize the inputs and the outputs
     y_true = np.zeros(
-        (batch_size, 52, 52, 9, 4 + 1 + len(Gb_label)))  # desired network output 3
+        (batch_size, Gb_cell, Gb_cell, 9, 4 + 1 + len(Gb_label)))  # desired network output 3
 
     for instance_index in range(batch_size):
         # allobj_sized = [{'xmin': 96, 'name': 'person', 'ymin': 96, 'xmax': 304, 'ymax': 304},
@@ -338,19 +338,19 @@ def data_generator(chunks):
             i %= n
             img_sized, box_sized = get_data(chunks[i], img_dir)
             i += 1
-            plt.cla()
-            plt.imshow(img_sized)
-            for obj in box_sized:
-                x1 = obj['xmin']
-                x2 = obj['xmax']
-                y1 = obj['ymin']
-                y2 = obj['ymax']
-
-                plt.hlines(y1, x1, x2, colors='red')
-                plt.hlines(y2, x1, x2, colors='red')
-                plt.vlines(x1, y1, y2, colors='red')
-                plt.vlines(x2, y1, y2, colors='red')
-            plt.show()
+            # plt.cla()
+            # plt.imshow(img_sized)
+            # for obj in box_sized:
+            #     x1 = obj['xmin']
+            #     x2 = obj['xmax']
+            #     y1 = obj['ymin']
+            #     y2 = obj['ymax']
+            #
+            #     plt.hlines(y1, x1, x2, colors='red')
+            #     plt.hlines(y2, x1, x2, colors='red')
+            #     plt.vlines(x1, y1, y2, colors='red')
+            #     plt.vlines(x2, y1, y2, colors='red')
+            # plt.show()
             # if len(boxes_sized) is 0:  # in case all the box in a batch become empty becase of the augmentation
             #     continue
             images_data.append(img_sized)
