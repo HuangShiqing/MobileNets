@@ -1,6 +1,7 @@
 import tensorflow as tf
-import tensorlayer as tl
-from tensorlayer.layers import *
+# import tensorlayer as tl
+# from tensorlayer.layers import *
+from net import InputLayer, Conv2d, BatchNormLayer, DepthwiseConv2d
 import numpy as np
 import time
 import cv2
@@ -80,7 +81,10 @@ def infenence(input_pb):
 
 
 if __name__ == '__main__':
+    input_pb = tf.placeholder(tf.float32, [None, 416, 416, 3])
     with tf.Session() as sess:
+        net = infenence(input_pb)
+
         sess.run(tf.global_variables_initializer())
         for i in range(10):
             img = cv2.imread('4.jpg')
@@ -88,5 +92,5 @@ if __name__ == '__main__':
             img = np.expand_dims(img, axis=0)
 
             time_1 = time.time()
-            a = sess.run(net.outputs, feed_dict={input_pb: img})
+            a = sess.run(net, feed_dict={input_pb: img})
             print(time.time() - time_1)

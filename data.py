@@ -377,16 +377,9 @@ def data_generator(chunks):
 
 
 if __name__ == '__main__':
-    # cur_dir = os.getcwd()
-    # os.chdir(Gb_img_dir)
-    # img_all = os.listdir('.')
-    # size = len(img_all)
-    # os.chdir(cur_dir)
-
     chunks = read_xml(Gb_img_dir, Gb_label_dir, Gb_label)
     # a, b = get_data(chunks[0], Gb_img_dir)
     # c = get_y_true(b)
-
     a = data_generator(chunks)
     for x in a:
         print('ok')
