@@ -134,21 +134,6 @@ def training(loss, learning_rate):
 
 
 def main():
-    # img = np.random.rand(1, 416, 416, 3)
-    # label = np.random.rand(16, 13, 13, 9, 6).astype('float32')
-    # y_pred = np.random.rand(16, 13, 13, 9, 6).astype('float32')
-    # with tf.Session() as sess:
-    #     y_true_pb = tf.placeholder(tf.float32, [None, Gb_cell, Gb_cell, 9, 5 + 1])
-    #     y_log_pb = tf.placeholder(tf.float32, [None, Gb_cell, Gb_cell, 9, 5 + 1])
-    #     loss_op = model_loss(y_true_pb, y_log_pb)
-    #     loss = sess.run(loss_op, feed_dict={y_true_pb: y_pred, y_log_pb: label})
-    #
-    #     # input_pb = tf.placeholder(tf.float32, [None, 416, 416, 3])
-    #     # log_op = infenence(input_pb)
-    #     # sess.run(tf.global_variables_initializer())
-    #     # log = sess.run(log_op, feed_dict={input_pb: img})
-    #     exit()
-
     n_class = len(Gb_label)
     # model_name = Gb_model_name
     log_dir = Gb_ckpt_dir

@@ -8,65 +8,67 @@ import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 
 
-def read_xml(ANN, pick, exclusive=False):
-    print('Parsing for {} {}'.format(
-        pick, 'exclusively' * int(exclusive)))
+def read_xml(img_dir, ANN, pick):
+    print('Parsing for {}'.format(pick))
+
+    cur_dir = os.getcwd()
+    os.chdir(img_dir)
+    img_all = os.listdir('.')
+    size = len(img_all)
+    os.chdir(cur_dir)
 
     dumps = list()
     cur_dir = os.getcwd()
     os.chdir(ANN)
     annotations = os.listdir('.')
-    # annotations = glob.glob(str(annotations) + '*.xml')
-    size = len(annotations)
 
-    for i, file in enumerate(annotations):
-        # progress bar
-        sys.stdout.write('\r')
-        percentage = 1. * (i + 1) / size
-        progress = int(percentage * 20)
-        bar_arg = [progress * '=', ' ' * (19 - progress), percentage * 100]
-        bar_arg += [file]
-        sys.stdout.write('[{}>{}]{:.0f}%  {}'.format(*bar_arg))
-        sys.stdout.flush()
+    img_with_box = [annotation.split('.')[0] + '.jpg' for annotation in annotations]
 
-        # actual parsing
-        in_file = open(file)
-        tree = ET.parse(in_file)
-        root = tree.getroot()
-        jpg = str(root.find('filename').text) + '.jpg'
-        imsize = root.find('size')
-        w = int(imsize.find('width').text)
-        h = int(imsize.find('height').text)
-        all = list()
-
-        for obj in root.iter('object'):
-            # current = list()
-            current = dict()
-            name = obj.find('name').text
-            if name not in pick:
-                continue
-
-            xmlbox = obj.find('bndbox')
-            xn = int(float(xmlbox.find('xmin').text))
-            xx = int(float(xmlbox.find('xmax').text))
-            yn = int(float(xmlbox.find('ymin').text))
-            yx = int(float(xmlbox.find('ymax').text))
-            # current = [name, xn, yn, xx, yx]
-            current['name'] = name
-            current['xmin'] = xn
-            current['xmax'] = xx
-            current['ymin'] = yn
-            current['ymax'] = yx
-            all += [current]
-
-        add = [[jpg, [w, h, all]]]
-        if len(all) is not 0:  # skip the image which not include any 'pick'
+    for file in tqdm(img_all):
+        if file not in img_with_box:
+            add = [[file, []]]
             dumps += add
-        in_file.close()
+        else:
+            # actual parsing
+            in_file = open(file.strip('jpg') + 'xml')
+            tree = ET.parse(in_file)
+            root = tree.getroot()
+            jpg = str(root.find('filename').text) + '.jpg'
+            imsize = root.find('size')
+            w = int(imsize.find('width').text)
+            h = int(imsize.find('height').text)
+            all = list()
+
+            for obj in root.iter('object'):
+                # current = list()
+                current = dict()
+                name = obj.find('name').text
+                if name not in pick:
+                    continue
+
+                xmlbox = obj.find('bndbox')
+                xn = int(float(xmlbox.find('xmin').text))
+                xx = int(float(xmlbox.find('xmax').text))
+                yn = int(float(xmlbox.find('ymin').text))
+                yx = int(float(xmlbox.find('ymax').text))
+                # current = [name, xn, yn, xx, yx]
+                current['name'] = name
+                current['xmin'] = xn
+                current['xmax'] = xx
+                current['ymin'] = yn
+                current['ymax'] = yx
+                all += [current]
+
+            add = [[jpg, [w, h, all]]]
+            if len(all) is not 0:  # skip the image which not include any 'pick'
+                dumps += add
+            in_file.close()
 
     # gather all stats
     stat = dict()
     for dump in dumps:
+        if dump[1] == []:
+            continue
         all = dump[1][2]
         for current in all:
             if current['name'] in pick:
@@ -225,13 +227,17 @@ def get_data(chunk, img_dir):
     img = cv2.imread(img_dir + chunk[0])
     img = img[:, :, ::-1]  # RGB image
     img = resize_img(img)
-    boxes = resize_boxes(chunk[1], 1598, 416)
+    if chunk[1] == []:
+        boxes = []
+    else:
+        boxes = resize_boxes(chunk[1], 1598, 416)
 
     img = random_distort_image(img)
 
     flip = np.random.randint(2)
     img = random_flip(img, flip)
-    boxes = flip_boxes(boxes, flip)
+    if boxes != []:
+        boxes = flip_boxes(boxes, flip)
 
     # visualization2(img, boxes)
     return img, boxes
@@ -264,6 +270,11 @@ def bbox_iou(box1, box2):
 
 
 def get_y_true(boxes):
+    if boxes == []:
+        y_true = np.zeros(
+            (Gb_batch_size, Gb_cell, Gb_cell, 9, 4 + 1 + len(Gb_label)))  # desired network output 3
+        return y_true
+
     batch_size = Gb_batch_size
     net_w = net_h = 416
     anchors = Gb_anchors
@@ -366,14 +377,15 @@ def data_generator(chunks):
 
 
 if __name__ == '__main__':
-    cur_dir = os.getcwd()
-    os.chdir(Gb_img_dir)
-    annotations = os.listdir('.')
-    size = len(annotations)
-    os.chdir(cur_dir)
+    # cur_dir = os.getcwd()
+    # os.chdir(Gb_img_dir)
+    # img_all = os.listdir('.')
+    # size = len(img_all)
+    # os.chdir(cur_dir)
 
-    chunks = read_xml(Gb_label_dir, Gb_label)
-    img_with_box = [chunk[0] for chunk in chunks]
+    chunks = read_xml(Gb_img_dir, Gb_label_dir, Gb_label)
+    # a, b = get_data(chunks[0], Gb_img_dir)
+    # c = get_y_true(b)
 
     a = data_generator(chunks)
     for x in a:
