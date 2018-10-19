@@ -29,7 +29,8 @@ def _expand(inputs, num_outputs):
     return tf.concat([e1x1, e3x3], axis=-1)
 
 
-def _squeezenet(images, num_classes=1000):
+def squeezenet(images):
+    n = 9 * (5 + 1)
     # net = conv2d(images, 96, [7, 7], stride=2, scope='conv1')
     net = conv2d(images, 96, [3, 3], stride=2, scope='conv1')
     net = max_pool2d(net, [3, 3], stride=2, scope='maxpool1')
@@ -43,7 +44,7 @@ def _squeezenet(images, num_classes=1000):
     net = fire_module(net, 64, 256, scope='fire8')
     net = max_pool2d(net, [3, 3], stride=2, scope='maxpool8')
     net = fire_module(net, 64, 256, scope='fire9')
-    net = conv2d(net, num_classes, [1, 1], stride=1, scope='conv10')
+    net = conv2d(net, n, [1, 1], stride=1, scope='conv10')
     # net = avg_pool2d(net, [13, 13], stride=1, scope='avgpool10')
     # logits = tf.squeeze(net, [2], name='logits')
     return net
@@ -52,7 +53,7 @@ def _squeezenet(images, num_classes=1000):
 if __name__ == '__main__':
     input_pb = tf.placeholder(tf.float32, [None, 416, 416, 3])
     with tf.Session() as sess:
-        net = _squeezenet(input_pb, 10)
+        net = squeezenet(input_pb)
 
         sess.run(tf.global_variables_initializer())
         for i in range(10):

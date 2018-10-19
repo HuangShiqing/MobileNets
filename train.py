@@ -4,6 +4,7 @@ import time
 import numpy as np
 from data import read_xml, data_generator
 from model import infenence
+from squeezenet import squeezenet
 
 
 def iou(pre_boxes, true_boxes):
@@ -48,12 +49,6 @@ def model_loss(y_pred, y_true):
     img_w = 416
     img_h = 416
     img_factor = tf.reshape(tf.cast([img_w, img_h], tf.float32), [1, 1, 1, 1, 2])
-
-    loss_sum = 0
-    sum_loss_xy = 0
-    sum_loss_wh = 0
-    sum_loss_c = 0
-    sum_loss_class = 0
 
     anchor = anchors
     object_mask = y_true[..., 4:5]
@@ -111,15 +106,10 @@ def model_loss(y_pred, y_true):
         object_mask * tf.nn.sigmoid_cross_entropy_with_logits(logits=net_out_reshape[..., 5:],
                                                               labels=adjusted_true_class)) / batch_size
 
-    sum_loss_xy += loss_xy
-    sum_loss_wh += loss_wh
-    sum_loss_c += loss_c
-    sum_loss_class += loss_class
-    loss_sum += loss_xy + loss_wh + loss_c + loss_class
-
+    loss_sum = loss_xy + loss_wh + loss_c + loss_class
     tf.summary.scalar('/loss', loss_sum)
-    tf.summary.scalar('/loss_xy', sum_loss_xy)
-    tf.summary.scalar('/loss_wh', sum_loss_wh)
+    tf.summary.scalar('/loss_xy', loss_xy)
+    tf.summary.scalar('/loss_wh', loss_wh)
     tf.summary.scalar('/loss_c', loss_c)
     tf.summary.scalar('/loss_class', loss_class)
     return loss_sum
@@ -143,7 +133,7 @@ def main():
     batch_size = Gb_batch_size
     pick = Gb_label
     learning_rate = Gb_learning_rate
-    chunks = read_xml(label_dir, pick)
+    chunks = read_xml(Gb_img_dir, label_dir, pick, )
     n_epoch = Gb_epoch
     n_step_epoch = int(len(chunks) / batch_size)
     # n_step = n_epoch * n_step_epoch
@@ -151,6 +141,7 @@ def main():
     input_pb = tf.placeholder(tf.float32, [None, 416, 416, 3])
     y_true_pb = tf.placeholder(tf.float32, [None, Gb_cell, Gb_cell, 9, 5 + n_class])
     net_out = infenence(input_pb)
+    # net_out = squeezenet(input_pb)
     loss_op = model_loss(net_out, y_true_pb)
     train_op = training(loss_op, learning_rate)
 
@@ -182,6 +173,7 @@ def main():
                 step_epoch += 1
                 start_time = time.time()
 
+                # a = sess.run(tf.trainable_variables()[0])
                 summary_str, loss, _ = sess.run([summary_op, loss_op, train_op],
                                                 feed_dict={input_pb: img, y_true_pb: lable_box})
                 train_writer.add_summary(summary_str, step)

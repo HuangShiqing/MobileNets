@@ -9,7 +9,7 @@ import cv2
 
 # input_pb = tf.placeholder(tf.float32, [None, 416, 416, 3])
 def infenence(input_pb):
-    is_train = False
+    is_train = True
     n = 9 * (5 + 1)
     net = InputLayer(input_pb, name='input')
     net = Conv2d(net, n_filter=32, filter_size=(3, 3), strides=(2, 2), b_init=None, name='cin')
